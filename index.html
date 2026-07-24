@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fabio Valente — Member Auth</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f0f;
+            color: #f1f1f1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 720px;
+            width: 100%;
+            padding: 40px 24px;
+        }
+        .logo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 24px;
+            display: block;
+        }
+        h1 {
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #aaa;
+            font-size: 16px;
+            margin-bottom: 40px;
+        }
+        .card {
+            background: #1f1f1f;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+        .card h2 {
+            font-size: 20px;
+            margin-bottom: 12px;
+            color: #3ea6ff;
+        }
+        .card p {
+            line-height: 1.7;
+            color: #ccc;
+            margin-bottom: 12px;
+        }
+        .links {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 32px;
+        }
+        .links a {
+            color: #3ea6ff;
+            text-decoration: none;
+            padding: 10px 24px;
+            border: 1px solid #3ea6ff;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .links a:hover {
+            background: #3ea6ff;
+            color: #0f0f0f;
+        }
+        footer {
+            text-align: center;
+            padding: 24px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="logo.png" alt="Fabio Valente" class="logo">
+        <h1>Fabio Valente — Member Auth</h1>
+        <p class="subtitle">Sistema de autenticação de membros do canal do YouTube</p>
+
+        <div class="card">
+            <h2>Sobre</h2>
+            <p>Este aplicativo permite que membros do canal do YouTube <strong>Fabio Valente</strong> verifiquem sua assinatura para acessar conteúdo exclusivo e benefícios.</p>
+            <p>Ao fazer login com sua conta Google, verificamos se você é um membro ativo do canal. Nenhum dado pessoal sensível é armazenado — apenas seu ID público do canal do YouTube.</p>
+        </div>
+
+        <div class="card">
+            <h2>Como funciona</h2>
+            <p>1. Você faz login com sua conta Google</p>
+            <p>2. O sistema verifica se você é um membro ativo do canal</p>
+            <p>3. Se for membro, você recebe acesso ao conteúdo exclusivo</p>
+        </div>
+
+        <div class="card">
+            <h2>Dados coletados</h2>
+            <p>Utilizamos apenas o mínimo necessário para verificar sua assinatura:</p>
+            <p>• Seu endereço de e-mail Google</p>
+            <p>• Seu ID público do canal do YouTube</p>
+            <p>Não coletamos senhas, dados financeiros ou informações pessoais sensíveis.</p>
+        </div>
+
+        <div class="links">
+            <a href="privacy.html">Política de Privacidade</a>
+            <a href="terms.html">Termos de Serviço</a>
+        </div>
+    </div>
+
+    <footer>
+        © 2026 Fabio Valente — autotrading.yt@gmail.com
+    </footer>
+</body>
+</html>
