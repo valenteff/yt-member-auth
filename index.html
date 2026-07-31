@@ -2,181 +2,622 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Channel Members Auth — App de verificação de membros do YouTube</title>
-    <meta name="description" content="Channel Members Auth é um aplicativo que verifica se usuários são membros ativos de um canal do YouTube, usando a YouTube Data API v3 para autenticar e autorizar acesso a conteúdo exclusivo.">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f1f0e9">
+    <meta name="description" content="Channel Members Auth — verificação de membros ativos de canais do YouTube via OAuth 2.0 e YouTube Data API v3.">
+    <title>Channel Members Auth — Verificação de Membros do YouTube</title>
     <meta name="google-site-verification" content="rX1PNX0tnOJgYka7XhGpmWawkIt4GY23IknURY1X30w" />
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --paper: #f1f0e9;
+            --paper-deep: #e4e3dc;
+            --ink: #242826;
+            --muted: #666b67;
+            --rule: #aaa9a1;
+            --rule-dark: #777972;
+            --cobalt: #1748d2;
+            --cobalt-dark: #0e3299;
+            --max: 1660px;
+            --pad: clamp(20px, 4vw, 72px);
+        }
+
+        @font-face {
+            font-family: "Source Serif 4";
+            src: url("https://fonts.gstatic.com/s/sourceserif4/v8/pyIByDtlg47TU4MuD5sIfjVP3fRWu7j9.woff2") format("woff2");
+            font-style: normal;
+            font-weight: 400 600;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: "IBM Plex Sans";
+            src: url("https://fonts.gstatic.com/s/ibmplexsans/v19/zYX-KVElMYYaJe8bpLHnCwDKhdTmrINce_fuJGl18QRY.woff2") format("woff2");
+            font-style: normal;
+            font-weight: 400 600;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: "IBM Plex Mono";
+            src: url("https://fonts.gstatic.com/s/ibmplexmono/v19/-F63fjptAgt5VM-kVkqdyU8n5iI.woff2") format("woff2");
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: "IBM Plex Mono";
+            src: url("https://fonts.gstatic.com/s/ibmplexmono/v19/-F6qfjptAgt5VM-kVkqdyU8n5j0u2F1JeA.woff2") format("woff2");
+            font-style: normal;
+            font-weight: 500;
+            font-display: swap;
+        }
+
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f0f0f;
-            color: #f1f1f1;
-            min-height: 100vh;
+            margin: 0;
+            background: var(--paper);
+            color: var(--ink);
+            font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.55;
+        }
+        a { color: inherit; }
+        ::selection { color: var(--paper); background: var(--cobalt); }
+
+        .shell { width: min(100%, var(--max)); margin-inline: auto; padding-inline: var(--pad); }
+
+        .mono, .eyebrow, .button, .stat-label, .step-no {
+            font-family: "IBM Plex Mono", monospace;
+            letter-spacing: .035em;
+        }
+
+        .eyebrow {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0;
+            color: var(--cobalt);
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        .eyebrow::before { content: ""; width: 22px; height: 2px; background: currentColor; }
+
+        .section-title {
+            max-width: 860px;
+            margin: 18px 0 0;
+            font-family: "Source Serif 4", Georgia, serif;
+            font-size: clamp(36px, 5vw, 72px);
+            font-weight: 500;
+            line-height: .95;
+            letter-spacing: -.035em;
+        }
+
+        /* ── NAV ── */
+        .masthead {
+            position: sticky;
+            z-index: 20;
+            top: 0;
+            background: var(--paper);
+            border-bottom: 1px solid var(--ink);
+        }
+        .nav {
+            min-height: 72px;
+            display: grid;
+            grid-template-columns: minmax(180px, 1fr) auto minmax(180px, 1fr);
+            align-items: center;
+            gap: 28px;
+        }
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 11px;
+            width: max-content;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .brand img { width: 31px; height: 31px; object-fit: contain; }
+        .brand span { font-size: 15px; letter-spacing: -.02em; }
+        .nav-links { display: flex; justify-content: center; gap: clamp(18px, 3vw, 48px); }
+        .nav-links a {
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+            font-size: 12px;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: .09em;
+            transition: color .18s;
+        }
+        .nav-links a:hover { color: var(--cobalt); }
+        .nav-actions { justify-self: end; }
+        .nav-cta {
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+            padding: 0 16px;
+            border: 1px solid var(--cobalt);
+            background: var(--cobalt);
+            color: white;
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 11px;
+            font-weight: 500;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            transition: background .18s ease, border-color .18s ease;
+        }
+        .nav-cta:hover { background: var(--cobalt-dark); border-color: var(--cobalt-dark); }
+
+        /* ── HERO ── */
+        .hero {
+            min-height: calc(100svh - 72px);
+            display: grid;
+            grid-template-columns: minmax(0, 1.6fr) minmax(260px, .4fr);
+            grid-template-rows: auto 1fr auto;
+            column-gap: clamp(30px, 6vw, 110px);
+            padding-top: clamp(44px, 8vh, 104px);
+            padding-bottom: 30px;
+        }
+        .hero-topline {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid var(--ink);
+            padding-top: 9px;
+        }
+        .hero-topline span { font-size: 10px; text-transform: uppercase; font-family: "IBM Plex Mono", monospace; letter-spacing: .04em; }
+        .hero-topline span:last-child { color: var(--muted); }
+
+        .hero-copy { align-self: center; padding-block: 48px; }
+        h1 {
+            max-width: 1140px;
+            margin: 0;
+            font-family: "Source Serif 4", Georgia, serif;
+            font-size: clamp(52px, 8vw, 130px);
+            font-weight: 500;
+            line-height: .82;
+            letter-spacing: -.05em;
+        }
+        h1 em { display: block; color: var(--cobalt); font-style: italic; }
+        .hero-deck {
+            width: min(620px, 72%);
+            margin: 36px 0 0 auto;
+            padding-left: 21px;
+            border-left: 1px solid var(--cobalt);
+            font-family: "Source Serif 4", Georgia, serif;
+            font-size: clamp(18px, 2vw, 26px);
+            line-height: 1.3;
+        }
+
+        .hero-margin {
+            align-self: stretch;
             display: flex;
             flex-direction: column;
+            justify-content: center;
+            border-left: 1px solid var(--rule);
+            padding-left: 20px;
+        }
+        .hero-margin .margin-label { color: var(--cobalt); font-size: 11px; font-family: "IBM Plex Mono", monospace; letter-spacing: .035em; text-transform: uppercase; }
+        .hero-margin p { margin: 14px 0 26px; color: var(--muted); font-size: 13px; }
+
+        .button {
+            min-height: 50px;
+            display: inline-flex;
             align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            padding: 0 17px;
+            border: 1px solid var(--ink);
+            border-radius: 1px;
+            background: transparent;
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 11px;
+            font-weight: 500;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: .035em;
+            transition: color .18s ease, background .18s ease, border-color .18s ease;
         }
-        .container {
-            max-width: 720px;
-            width: 100%;
-            padding: 40px 24px;
+        .button:hover { color: var(--paper); border-color: var(--cobalt); background: var(--cobalt); }
+        .button-primary { color: white; border-color: var(--cobalt); background: var(--cobalt); }
+        .button-primary:hover { border-color: var(--cobalt-dark); background: var(--cobalt-dark); }
+
+        .hero-footer {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            border-top: 1px solid var(--ink);
+            border-bottom: 1px solid var(--ink);
         }
-        .logo {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            margin: 0 auto 24px;
-            display: block;
+        .hero-stat { display: flex; align-items: baseline; gap: 10px; padding: 15px 0; }
+        .hero-stat + .hero-stat { border-left: 1px solid var(--rule); padding-left: 20px; }
+        .hero-stat strong { font-family: "Source Serif 4", Georgia, serif; color: var(--cobalt); font-size: clamp(26px, 3vw, 42px); line-height: 1; }
+        .stat-label { color: var(--muted); font-size: 9px; text-transform: uppercase; }
+
+        /* ── SECTIONS ── */
+        section { scroll-margin-top: 90px; }
+        .section-pad { padding-top: clamp(80px, 12vw, 170px); }
+        .section-heading-grid {
+            display: grid;
+            grid-template-columns: minmax(110px, .3fr) minmax(0, 1.7fr);
+            gap: 32px;
         }
-        h1 {
-            text-align: center;
-            font-size: 32px;
-            margin-bottom: 8px;
+        .margin-note { border-top: 1px solid var(--ink); padding-top: 10px; }
+        .note { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.7; text-transform: uppercase; font-family: "IBM Plex Mono", monospace; }
+        .scope-text { max-width: 720px; margin: 22px 0 0; color: var(--muted); font-size: 17px; line-height: 1.55; }
+
+        /* ── CARDS / DATA ── */
+        .data-grid {
+            margin-top: clamp(54px, 8vw, 100px);
+            border-top: 1px solid var(--ink);
         }
-        .app-name {
-            text-align: center;
-            font-size: 28px;
-            font-weight: bold;
-            margin-bottom: 4px;
+        .data-row {
+            display: grid;
+            grid-template-columns: minmax(70px, .25fr) minmax(260px, .75fr) minmax(280px, 1fr);
+            gap: 32px;
+            align-items: start;
+            padding: 28px 0;
+            border-bottom: 1px solid var(--rule);
+            transition: background .15s;
         }
-        .tagline {
-            text-align: center;
-            color: #3ea6ff;
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 12px;
-        }
-        .subtitle {
-            text-align: center;
-            color: #aaa;
-            font-size: 15px;
-            margin-bottom: 40px;
-        }
-        .purpose-banner {
-            background: #1a1a2e;
-            border: 2px solid #3ea6ff;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 32px;
-            text-align: center;
-        }
-        .purpose-banner h2 {
-            color: #3ea6ff;
-            font-size: 18px;
-            margin-bottom: 8px;
-        }
-        .purpose-banner p {
-            color: #f1f1f1;
-            font-size: 16px;
-            line-height: 1.6;
-        }
-        .card {
-            background: #1f1f1f;
-            border-radius: 12px;
-            padding: 32px;
-            margin-bottom: 24px;
-        }
-        .card h2 {
-            font-size: 20px;
-            margin-bottom: 12px;
-            color: #3ea6ff;
-        }
-        .card p {
-            line-height: 1.7;
-            color: #ccc;
-            margin-bottom: 12px;
-        }
+        .data-row:hover .data-name { color: var(--cobalt); }
+        .data-no { padding-top: 7px; color: var(--cobalt); font-size: 11px; font-family: "IBM Plex Mono", monospace; }
+        .data-name { margin: 0; font-family: "Source Serif 4", Georgia, serif; font-size: clamp(26px, 3vw, 42px); font-weight: 500; line-height: 1; transition: color .15s; }
+        .data-info p { max-width: 600px; margin: 0 0 12px; color: var(--muted); font-size: 15px; }
+        .data-info code { font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--cobalt); background: var(--paper-deep); padding: 2px 6px; }
+
         .scope-box {
-            background: #0f0f0f;
-            border: 1px solid #333;
-            border-radius: 8px;
-            padding: 16px;
-            margin: 12px 0;
-            font-family: 'SF Mono', Monaco, monospace;
-            font-size: 14px;
-            color: #4ec9b0;
+            display: inline-block;
+            margin-top: 8px;
+            padding: 6px 10px;
+            border: 1px solid var(--rule);
+            font-family: "IBM Plex Mono", monospace;
+            font-size: 12px;
+            color: var(--cobalt);
             word-break: break-all;
         }
-        .links {
+
+        /* ── PROCESS ── */
+        .process-wrap {
+            margin-top: 38px;
+            border-top: 1px solid var(--ink);
+            border-bottom: 1px solid var(--ink);
+        }
+        .process-list {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+        }
+        .process-step {
+            padding: 22px 18px;
+            border-right: 1px solid var(--rule);
+            transition: background .15s;
+        }
+        .process-step:last-child { border-right: 0; }
+        .process-step:hover { background: var(--paper-deep); }
+        .step-no { color: var(--cobalt); font-size: 10px; text-transform: uppercase; margin-bottom: 14px; display: block; }
+        .process-step strong { font-family: "Source Serif 4", Georgia, serif; font-size: clamp(18px, 2vw, 28px); font-weight: 500; display: block; line-height: 1.05; margin-bottom: 12px; }
+        .process-step p { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+        /* ── PRIVACY / DATA COLLECTED ── */
+        .collected-grid {
+            margin-top: clamp(54px, 8vw, 100px);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            border-top: 1px solid var(--ink);
+        }
+        .collected-col { padding: 36px 0; }
+        .collected-col:first-child { border-right: 1px solid var(--rule); padding-right: clamp(30px, 5vw, 64px); }
+        .collected-col:last-child { padding-left: clamp(30px, 5vw, 64px); }
+        .collected-label { font-family: "IBM Plex Mono", monospace; font-size: 10px; text-transform: uppercase; color: var(--cobalt); margin-bottom: 24px; }
+        .collected-list { list-style: none; padding: 0; margin: 0; }
+        .collected-list li {
+            display: grid;
+            grid-template-columns: 24px 1fr;
+            gap: 10px;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--rule);
+            font-size: 15px;
+            color: var(--ink);
+        }
+        .collected-list li span:first-child { color: var(--cobalt); font-family: "IBM Plex Mono", monospace; font-size: 12px; }
+
+        /* ── CLOSING ── */
+        .closing { margin-top: clamp(110px, 15vw, 230px); color: var(--paper); background: var(--ink); }
+        .closing-inner {
+            display: grid;
+            grid-template-columns: minmax(0, 1.5fr) minmax(270px, .5fr);
+            gap: 70px;
+            padding-top: clamp(60px, 8vw, 110px);
+            padding-bottom: 45px;
+        }
+        .closing .eyebrow { color: #7ea0ff; }
+        .closing .eyebrow::before { background: #7ea0ff; }
+        .closing h2 {
+            max-width: 1100px;
+            margin: 25px 0 0;
+            font-family: "Source Serif 4", Georgia, serif;
+            font-size: clamp(44px, 7vw, 110px);
+            font-weight: 500;
+            line-height: .88;
+            letter-spacing: -.05em;
+        }
+        .closing h2 em { color: #7ea0ff; font-style: italic; }
+        .closing aside { align-self: end; padding-left: 20px; border-left: 1px solid #6e716f; }
+        .closing aside p { margin: 0 0 26px; color: #b6b8b5; font-size: 14px; }
+        .closing .button { color: white; border-color: #8a8d89; }
+        .closing .button:hover { border-color: var(--cobalt); }
+
+        .footer {
+            grid-column: 1 / -1;
             display: flex;
-            gap: 16px;
-            justify-content: center;
-            margin-top: 32px;
+            justify-content: space-between;
+            align-items: center;
+            gap: 28px;
+            margin-top: 80px;
+            padding-top: 14px;
+            border-top: 1px solid #6e716f;
+            color: #b6b8b5;
+            font-size: 11px;
         }
-        .links a {
-            color: #3ea6ff;
-            text-decoration: none;
-            padding: 10px 24px;
-            border: 1px solid #3ea6ff;
-            border-radius: 6px;
-            transition: all 0.2s;
+        .footer a { text-decoration: none; }
+        .footer a:hover { color: white; }
+        .footer-links { display: inline-flex; gap: 24px; }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 1100px) {
+            .nav { grid-template-columns: 1fr auto; }
+            .nav-links { display: none; }
         }
-        .links a:hover {
-            background: #3ea6ff;
-            color: #0f0f0f;
+        @media (max-width: 860px) {
+            .nav { grid-template-columns: 1fr auto; min-height: 64px; gap: 12px; }
+            .hero { min-height: auto; grid-template-columns: 1fr; padding-top: 28px; }
+            .hero-topline { grid-column: auto; }
+            .hero-copy { padding: 48px 0 36px; }
+            .hero-deck { width: 85%; margin-top: 30px; }
+            .hero-margin { padding: 26px 0 34px; border-top: 1px solid var(--rule); border-left: 0; }
+            .hero-margin .button { width: 100%; }
+            .hero-footer { grid-template-columns: 1fr; }
+            .hero-stat + .hero-stat { border-top: 1px solid var(--rule); border-left: 0; padding-left: 0; }
+            .section-heading-grid { grid-template-columns: 1fr; }
+            .data-row { grid-template-columns: 52px 1fr; gap: 16px; }
+            .data-info { grid-column: 2; }
+            .process-list { grid-template-columns: 1fr; }
+            .process-step { border-right: 0; border-bottom: 1px solid var(--rule); }
+            .collected-grid { grid-template-columns: 1fr; }
+            .collected-col:first-child { border-right: 0; border-bottom: 1px solid var(--rule); padding-right: 0; padding-bottom: 36px; }
+            .collected-col:last-child { padding-left: 0; padding-top: 36px; }
+            .closing-inner { grid-template-columns: 1fr; gap: 40px; }
+            .closing aside { padding: 28px 0 0; border-top: 1px solid #6e716f; border-left: 0; }
+            .footer { flex-direction: column; margin-top: 60px; }
         }
-        footer {
-            text-align: center;
-            padding: 24px;
-            color: #666;
-            font-size: 14px;
+        @media (max-width: 520px) {
+            :root { --pad: 18px; }
+            .brand span { font-size: 13px; }
+            .process-list { grid-template-columns: 1fr 1fr; }
+            .process-step:nth-child(odd) { border-right: 1px solid var(--rule); }
+            .process-step:nth-child(even) { border-right: 0; }
+            .footer { flex-direction: column; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after { transition-duration: .01ms !important; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <img src="logo.png" alt="Channel Members Auth logo" class="logo">
 
-        <div class="app-name">Channel Members Auth</div>
-        <div class="tagline">Verificação de membros de canais do YouTube</div>
-        <p class="subtitle">Aplicativo de autenticação OAuth para creators verificarem membros ativos</p>
+<!-- ═══ NAV ═══ -->
+<header class="masthead">
+    <div class="shell">
+        <nav class="nav">
+            <a href="/" class="brand">
+                <img src="logo_new.svg" alt="Channel Members Auth">
+                <span>Channel Members Auth</span>
+            </a>
+            <div class="nav-links">
+                <a href="#escopo">Escopo</a>
+                <a href="#como-funciona">Método</a>
+                <a href="#dados">Dados</a>
+                <a href="#contato">Contato</a>
+            </div>
+            <div class="nav-actions">
+                <a href="https://github.com/valenteff/yt-member-auth" class="nav-cta">GitHub ↗</a>
+            </div>
+        </nav>
+    </div>
+</header>
 
-        <div class="purpose-banner">
-            <h2>📋 Finalidade do aplicativo</h2>
-            <p>Este aplicativo permite que criadores de conteúdo do YouTube verifiquem se um usuário é um <strong>membro ativo e pago</strong> do seu canal, usando a YouTube Data API v3. O sistema é usado para conceder ou negar acesso a conteúdo exclusivo e benefícios baseados no status de assinatura.</p>
+<main>
+
+<!-- ═══ HERO ═══ -->
+<section class="shell hero">
+    <div class="hero-topline">
+        <span>APP DE VERIFICAÇÃO / OAUTH 2.0</span>
+        <span>YouTube Data API v3</span>
+    </div>
+
+    <div class="hero-copy">
+        <p class="eyebrow">Verificação de membros</p>
+        <h1>Somente <em>membros ativos.</em></h1>
+        <p class="hero-deck">Sistema de autenticação OAuth que verifica assinaturas pagas do YouTube em tempo real e concede acesso a conteúdo exclusivo — sem senhas, sem dados sensíveis.</p>
+    </div>
+
+    <aside class="hero-margin">
+        <span class="margin-label">Para criadores</span>
+        <p>Conceda acesso a benefícios exclusivos apenas para membros pagos do seu canal. Verificação automática, segura e via API oficial do Google.</p>
+        <a href="#como-funciona" class="button">
+            Como funciona
+            <span>→</span>
+        </a>
+    </aside>
+
+    <div class="hero-footer">
+        <div class="hero-stat">
+            <strong>OAuth 2.0</strong>
+            <span class="stat-label">Autenticação Google</span>
         </div>
-
-        <div class="card">
-            <h2>🔐 Escopo OAuth restrito utilizado</h2>
-            <p>Este aplicativo solicita o seguinte escopo restrito do Google:</p>
-            <div class="scope-box">https://www.googleapis.com/auth/youtube.channel-memberships.creator</div>
-            <p><strong>Como é usado:</strong> O criador do canal faz autenticação uma única vez. O sistema então chama o endpoint <code>/youtube/v3/members</code> para listar os membros ativos do canal. Apenas o criador (admin) usa este escopo.</p>
-            <p><strong>Usuários finais</strong> autenticam com o escopo padrão <code>youtube.readonly</code> — não recebem o escopo restrito.</p>
+        <div class="hero-stat">
+            <strong>1h</strong>
+            <span class="stat-label">Sincronização automática</span>
         </div>
-
-        <div class="card">
-            <h2>ℹ Sobre</h2>
-            <p>O <strong>Channel Members Auth</strong> é um sistema que sincroniza a lista de membros ativos de um canal do YouTube através da API oficial do Google, permitindo verificar assinaturas para conceder acesso a benefícios exclusivos.</p>
-            <p>Ao fazer login com sua conta Google, verificamos se você é um membro ativo do canal. Nenhum dado pessoal sensível é armazenado — apenas seu ID público do canal do YouTube.</p>
+        <div class="hero-stat">
+            <strong>0</strong>
+            <span class="stat-label">Dados sensíveis armazenados</span>
         </div>
+    </div>
+</section>
 
-        <div class="card">
-            <h2>📊 Dados coletados</h2>
-            <p>Utilizamos apenas o mínimo necessário para verificar sua assinatura:</p>
-            <p>• <strong>ID público do canal do YouTube</strong> (channelId)</p>
-            <p>• <strong>Nome público do canal</strong> (displayName)</p>
-            <p>• <strong>Nível da assinatura</strong> (membershipLevelName)</p>
-            <p><strong>Não coletamos:</strong> senhas, dados financeiros, informações de cartão de crédito ou qualquer dado sensível.</p>
+<!-- ═══ ESCOPO ═══ -->
+<section id="escopo" class="shell section-pad">
+    <div class="section-heading-grid">
+        <div class="margin-note">
+            <p class="note">§ 01<br>Escopo OAuth</p>
         </div>
-
-        <div class="card">
-            <h2>⚙ Como funciona</h2>
-            <p>1. O criador do canal faz OAuth uma única vez com o escopo <code>memberships.creator</code></p>
-            <p>2. O sistema sincroniza a lista de membros via API a cada hora</p>
-            <p>3. O usuário faz login com Google (escopo <code>youtube.readonly</code>)</p>
-            <p>4. O sistema compara o ID do canal do usuário com a lista de membros</p>
-            <p>5. Se for membro, o acesso é concedido automaticamente</p>
-        </div>
-
-        <div class="links">
-            <a href="privacy.html">Política de Privacidade</a>
-            <a href="terms.html">Termos de Serviço</a>
+        <div>
+            <p class="eyebrow">Autorização restrita</p>
+            <h2 class="section-title">Apenas o escopo necessário. Nada mais.</h2>
+            <p class="scope-text">O aplicativo solicita um único escopo restrito do Google para verificar membros ativos do canal. Usuários finais nunca recebem este escopo — apenas o criador do canal o utiliza, uma única vez.</p>
         </div>
     </div>
 
-    <footer>
-        © 2026 Channel Members Auth — autotrading.yt@gmail.com
-    </footer>
+    <div class="data-grid">
+        <div class="data-row">
+            <div class="data-no">→ 01</div>
+            <div>
+                <h3 class="data-name">Escopo do criador</h3>
+            </div>
+            <div class="data-info">
+                <p>Usado pelo dono do canal para sincronizar a lista de membros ativos via YouTube Data API v3.</p>
+                <span class="scope-box">youtube.channel-memberships.creator</span>
+            </div>
+        </div>
+        <div class="data-row">
+            <div class="data-no">→ 02</div>
+            <div>
+                <h3 class="data-name">Escopo do usuário</h3>
+            </div>
+            <div class="data-info">
+                <p>Usado no login do membro para obter o ID público do canal. Acesso somente leitura, sem permissões sensíveis.</p>
+                <span class="scope-box">youtube.readonly</span>
+            </div>
+        </div>
+        <div class="data-row">
+            <div class="data-no">→ 03</div>
+            <div>
+                <h3 class="data-name">Verificação</h3>
+            </div>
+            <div class="data-info">
+                <p>O sistema compara o <code>channelId</code> do usuário autenticado com a lista de membros sincronizada. Se houver correspondência, o acesso é concedido automaticamente.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ COMO FUNCIONA ═══ -->
+<section id="como-funciona" class="shell section-pad">
+    <div class="section-heading-grid">
+        <div class="margin-note">
+            <p class="note">§ 02<br>Fluxo completo</p>
+        </div>
+        <div>
+            <p class="eyebrow">Método</p>
+            <h2 class="section-title">Do OAuth ao acesso em cinco passos.</h2>
+            <p class="scope-text">O criador autentica uma vez. O sistema sincroniza membros automaticamente. O usuário faz login e recebe acesso — ou não — baseado no status real da assinatura no YouTube.</p>
+        </div>
+    </div>
+
+    <div class="process-wrap">
+        <div class="process-list">
+            <div class="process-step">
+                <span class="step-no">→ 01</span>
+                <strong>Auth do criador</strong>
+                <p>O dono do canal faz OAuth uma única vez com o escopo <code style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--cobalt)">memberships.creator</code>.</p>
+            </div>
+            <div class="process-step">
+                <span class="step-no">→ 02</span>
+                <strong>Sync de membros</strong>
+                <p>O sistema consulta a API do YouTube a cada hora e mantém a lista de membros ativos atualizada localmente.</p>
+            </div>
+            <div class="process-step">
+                <span class="step-no">→ 03</span>
+                <strong>Login do usuário</strong>
+                <p>O membro faz login com Google usando o escopo padrão <code style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--cobalt)">youtube.readonly</code>.</p>
+            </div>
+            <div class="process-step">
+                <span class="step-no">→ 04</span>
+                <strong>Comparação</strong>
+                <p>O ID do canal do usuário é comparado com a lista de membros ativos sincronizada.</p>
+            </div>
+            <div class="process-step">
+                <span class="step-no">→ 05</span>
+                <strong>Acesso concedido</strong>
+                <p>Se for membro ativo, o acesso ao conteúdo exclusivo é liberado. Caso contrário, acesso negado.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ DADOS COLETADOS ═══ -->
+<section id="dados" class="shell section-pad">
+    <div class="section-heading-grid">
+        <div class="margin-note">
+            <p class="note">§ 03<br>Privacidade</p>
+        </div>
+        <div>
+            <p class="eyebrow">Transparência total</p>
+            <h2 class="section-title">O que coletamos — e o que não coletamos.</h2>
+            <p class="scope-text">Utilizamos apenas o mínimo necessário para verificar sua assinatura. Nenhum dado sensível é armazenado em texto puro. Nenhum dado financeiro passa pelo sistema.</p>
+        </div>
+    </div>
+
+    <div class="collected-grid">
+        <div class="collected-col">
+            <p class="collected-label">→ Coletamos</p>
+            <ul class="collected-list">
+                <li><span>01</span> <strong>ID público do canal</strong> do YouTube (channelId)</li>
+                <li><span>02</span> <strong>Nome público do canal</strong> (displayName)</li>
+                <li><span>03</span> <strong>Nível da assinatura</strong> (membershipLevelName)</li>
+            </ul>
+        </div>
+        <div class="collected-col">
+            <p class="collected-label">→ Não coletamos</p>
+            <ul class="collected-list">
+                <li><span>✕</span> Senhas ou credenciais de acesso</li>
+                <li><span>✕</span> Dados financeiros ou cartão de crédito</li>
+                <li><span>✕</span> Informações pessoais sensíveis</li>
+                <li><span>✕</span> Histórico de navegação ou atividade</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ CLOSING ═══ -->
+<section id="contato" class="closing">
+    <div class="shell">
+        <div class="closing-inner">
+            <div>
+                <p class="eyebrow">Próximo passo / GitHub</p>
+                <h2>Código aberto.<br><em>Pronto para usar.</em></h2>
+            </div>
+            <aside>
+                <p>O projeto é open-source. Clone, configure com suas credenciais OAuth do Google Cloud e deploy.</p>
+                <a href="https://github.com/valenteff/yt-member-auth" class="button">
+                    Ver no GitHub
+                    <span>↗</span>
+                </a>
+            </aside>
+            <div class="footer">
+                <span>© 2026 Channel Members Auth</span>
+                <div class="footer-links">
+                    <a href="privacy.html">Política de Privacidade</a>
+                    <a href="terms.html">Termos de Serviço</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+</main>
+
 </body>
 </html>
